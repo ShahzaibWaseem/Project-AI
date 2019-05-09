@@ -3,7 +3,7 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import random
-from cv2 import imread
+import cv2
 from model import buildModel
 
 from keras.models import load_model
@@ -16,7 +16,7 @@ DATA_DIR = "../data/"
 IMAGE_SIZE = 768
 BATCH_SIZE = 4
 VALIDATION_BATCH_SIZE = 2
-NUM_EPOCHS = 1
+NUM_EPOCHS = 10
 
 #9c9d84825.jpg
 
@@ -73,12 +73,10 @@ def main():
 
 	# model.compile(optimizer=Adam(1e-3, decay=0.0), metrics=['accuracy', f1], loss='mean_squared_error')
 
-
-
-	# model.save('ship.h5')
+	# model.save('ship_1.h5')
 
 	model = load_model('ship.h5', custom_objects={"f1" : f1})
-	# # Training
+	# Training
 	# history = model.fit_generator(datagen,
 	# 	steps_per_epoch = 250,
 	# 	epochs = NUM_EPOCHS,
@@ -105,8 +103,12 @@ def main():
 	# plt.savefig('../Images/ModelPerformance.png')
 	# plt.show()
 
-	tt = model.predict(validation_x)
-	print(np.max(tt))
+	predictions = model.predict(validation_x)
+	# print("First Prediction: ", predictions[0])
+
+	score = model.evaluate(validation_x, validation_y, verbose=1)
+	print('Validation loss:', score[0])
+	print('Validation accuracy:', score[1])
 
 def isNaN(x):
 	return 0 if (x == x) else 1
@@ -149,7 +151,7 @@ def customGenerator(trainDataFile, shipList, nanList, batchSize, equalizedData):
         batch_images = []
         batch_mask = []
         for name in batch_nan_names:
-            image = imread(DATA_DIR + 'train_v2/' + name)
+            image = cv2.imread(DATA_DIR + 'train_v2/' + name)
             batch_images.append(image)
             mask_list = trainDataFile['EncodedPixels'][trainDataFile['ImageId'] == name].tolist()
             oneMask = np.zeros((768, 768, 1))
@@ -159,7 +161,7 @@ def customGenerator(trainDataFile, shipList, nanList, batchSize, equalizedData):
                 oneMask[:,:,0] += tempMask
             batch_mask.append(oneMask)
         for name in batch_ship_names:
-            image = imread(DATA_DIR + 'train_v2/' + name)
+            image = cv2.imread(DATA_DIR + 'train_v2/' + name)
             batch_images.append(image)
             mask_list = trainDataFile['EncodedPixels'][trainDataFile['ImageId'] == name].tolist()
             oneMask = np.zeros((768, 768, 1))
