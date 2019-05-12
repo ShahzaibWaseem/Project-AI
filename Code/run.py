@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 import random
 import cv2
 from model import buildModel
+import imageProcessing
 
 from keras.models import load_model
 from keras.optimizers import *
@@ -22,7 +23,6 @@ NUM_EPOCHS = 10
 
 def main():
 	trainDataFile = pd.read_csv(DATA_DIR+'train_ship_segmentations_v2.csv')
-	trainDataFile = trainDataFile[trainDataFile['ImageId'] != '6384c3e78.jpg']
 	print("Training Data (csv) File Shape:\t", trainDataFile.shape)
 
 	# Labeling NaN values
@@ -68,40 +68,40 @@ def main():
 
 	validation_x, validation_y = next(valgen)
 
-	# model = buildModel()
-	# model.summary()
+	model = buildModel()
+	model.summary()
 
-	# model.compile(optimizer=Adam(1e-3, decay=0.0), metrics=['accuracy', f1], loss='mean_squared_error')
+	model.compile(optimizer=Adam(1e-3, decay=0.0), metrics=['accuracy', f1], loss='mean_squared_error')
 
-	# model.save('ship_1.h5')
+	model.save('ship_imageProcessing.h5')
 
-	model = load_model('ship.h5', custom_objects={"f1" : f1})
+	# model = load_model('ship.h5', custom_objects={"f1" : f1})
 	# Training
-	# history = model.fit_generator(datagen,
-	# 	steps_per_epoch = 250,
-	# 	epochs = NUM_EPOCHS,
-	# 	verbose = 1,
-	# 	validation_data=(validation_x, validation_y))
+	history = model.fit_generator(datagen,
+		steps_per_epoch = 250,
+		epochs = NUM_EPOCHS,
+		verbose = 1,
+		validation_data=(validation_x, validation_y))
 
-	# plt.subplot(2, 1, 1)
-	# plt.plot(history.history['acc'])
-	# plt.plot(history.history['val_acc'])
-	# plt.title('Model Accuracy')
-	# plt.ylabel('Accuracy')
-	# plt.xlabel('Epoch')
-	# plt.legend(['Train', 'Test'], loc='lower right')
+	plt.subplot(2, 1, 1)
+	plt.plot(history.history['acc'])
+	plt.plot(history.history['val_acc'])
+	plt.title('Model Accuracy')
+	plt.ylabel('Accuracy')
+	plt.xlabel('Epoch')
+	plt.legend(['Train', 'Test'], loc='lower right')
 
-	# plt.subplot(2, 1, 2)
-	# plt.plot(history.history['loss'])
-	# plt.plot(history.history['val_loss'])
-	# plt.title('Model Loss')
-	# plt.ylabel('Loss')
-	# plt.xlabel('Epoch')
-	# plt.legend(['Train', 'Test'], loc='upper right')
+	plt.subplot(2, 1, 2)
+	plt.plot(history.history['loss'])
+	plt.plot(history.history['val_loss'])
+	plt.title('Model Loss')
+	plt.ylabel('Loss')
+	plt.xlabel('Epoch')
+	plt.legend(['Train', 'Test'], loc='upper right')
 
-	# plt.tight_layout()
-	# plt.savefig('../Images/ModelPerformance.png')
-	# plt.show()
+	plt.tight_layout()
+	plt.savefig('../Images/ModelPerformance.png')
+	plt.show()
 
 	predictions = model.predict(validation_x)
 	# print("First Prediction: ", predictions[0])
@@ -152,6 +152,9 @@ def customGenerator(trainDataFile, shipList, nanList, batchSize, equalizedData):
         batch_mask = []
         for name in batch_nan_names:
             image = cv2.imread(DATA_DIR + 'train_v2/' + name)
+            # image = imageProcessing.Binarization(image)
+            image = imageProcessing.unsharpEnhancement(image)
+            image = imageProcessing.HistogramEqualization(image)
             batch_images.append(image)
             mask_list = trainDataFile['EncodedPixels'][trainDataFile['ImageId'] == name].tolist()
             oneMask = np.zeros((768, 768, 1))
