@@ -6,6 +6,8 @@ Ship detection from a dataset consisting of aerial images. Image processing tech
 
 ## Loss Function
 UNET's Loss Function
+
+
 ![Loss Function](https://github.com/ShahzaibWaseem/Project-AI/blob/master/Images/10%20Epochs.png)
 
 
